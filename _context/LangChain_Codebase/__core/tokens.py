@@ -1,0 +1,6 @@
+def extract_usage(msg) -> dict | None:
+    ...
+
+
+def add_usage(a: dict | None, b: dict | None) -> dict | None:
+    ...
