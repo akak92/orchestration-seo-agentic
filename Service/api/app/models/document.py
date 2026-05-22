@@ -27,7 +27,8 @@ class Document(Base):
     filename: Mapped[str] = mapped_column(String(512), nullable=False)
     mime_type: Mapped[str] = mapped_column(String(127), nullable=True)
     status: Mapped[DocumentStatus] = mapped_column(
-        Enum(DocumentStatus), default=DocumentStatus.PENDING
+        Enum(DocumentStatus, values_callable=lambda x: [e.value for e in x]),
+        default=DocumentStatus.PENDING,
     )
     extracted_text: Mapped[str] = mapped_column(Text, nullable=True)
     error_message: Mapped[str] = mapped_column(Text, nullable=True)

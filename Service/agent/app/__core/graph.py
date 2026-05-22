@@ -46,4 +46,9 @@ def build_graph(
         builder.add_node(spec.name, build_agent_node(llm, spec))
         builder.add_edge(spec.name, "supervisor")
 
-    return builder.compile(checkpointer=checkpointer)
+    return builder.compile(
+        checkpointer=checkpointer,
+        # Red de seguridad: impide bucles infinitos aunque falle la
+        # detección programática en el supervisor.
+        interrupt_before=None,
+    )

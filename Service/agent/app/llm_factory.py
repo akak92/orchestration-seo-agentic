@@ -13,6 +13,5 @@ def build_llm() -> AzureChatOpenAI:
         api_key=settings.AZURE_OPENAI_KEY,
         api_version=settings.AZURE_OPENAI_VERSION,
         azure_deployment=settings.AZURE_OPENAI_DEPLOYMENT,
-        temperature=0.3,
         streaming=True,
     )

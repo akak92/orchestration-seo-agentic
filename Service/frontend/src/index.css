@@ -1,0 +1,40 @@
+@import "tailwindcss";
+
+/* ── Newsroom Desk — Vintage Magazine Theme ─────────────────── */
+@theme {
+  /* Palette */
+  --color-ink:              #2B3A42;
+  --color-ink-light:        #4A5C66;
+  --color-paper:            #F5F2EB;
+  --color-paper-dark:       #EDE9DC;
+  --color-red-correction:   #E35243;
+  --color-mustard:          #F2A900;
+  --color-cyan-worn:        #4A90E2;
+
+  /* Typography */
+  --font-display: "Playfair Display", Georgia, serif;
+  --font-body:    "Inter", system-ui, sans-serif;
+  --font-mono:    "Courier Prime", "Courier New", monospace;
+}
+
+/* Base resets */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-body);
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4 {
+  font-family: var(--font-display);
+}
+
+/* Scrollbar — subtle ink style */
+::-webkit-scrollbar        { width: 6px; height: 6px; }
+::-webkit-scrollbar-track  { background: var(--color-paper-dark); }
+::-webkit-scrollbar-thumb  { background: var(--color-ink-light); border-radius: 3px; }

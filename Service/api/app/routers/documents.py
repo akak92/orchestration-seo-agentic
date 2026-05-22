@@ -87,6 +87,31 @@ async def upload_document(
     )
 
 
+@router.get("/", response_model=list[DocumentStatusResponse])
+async def list_documents(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db),
+):
+    """Lista todos los documentos del usuario autenticado."""
+    result = await db.execute(
+        select(Document)
+        .where(Document.user_id == current_user.id)
+        .order_by(Document.created_at.desc())
+    )
+    docs = result.scalars().all()
+    return [
+        DocumentStatusResponse(
+            id=doc.id,
+            filename=doc.filename,
+            status=doc.status,
+            extracted_text=doc.extracted_text,
+            error_message=doc.error_message,
+            created_at=doc.created_at,
+        )
+        for doc in docs
+    ]
+
+
 @router.get("/{document_id}", response_model=DocumentStatusResponse)
 async def get_document_status(
     document_id: str,
@@ -104,4 +129,10 @@ async def get_document_status(
     if not doc:
         raise HTTPException(status_code=404, detail="Documento no encontrado.")
 
-    return doc
+    return DocumentStatusResponse(
+        id=doc.id,
+        filename=doc.filename,
+        status=doc.status,
+        extracted_text=doc.extracted_text,
+        error_message=doc.error_message,
+    )

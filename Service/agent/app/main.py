@@ -66,15 +66,15 @@ async def invoke(req: AgentRequest):
 
 @app.post("/stream")
 async def stream(req: AgentRequest):
-    """Streaming de tokens via Server-Sent Events."""
+    """Streaming via Server-Sent Events. Emite eventos JSON: routing, token, done."""
     async def event_generator():
-        async for token in orchestrator.stream_events(
+        async for payload in orchestrator.stream_events(
             message=req.message,
             thread_id=req.thread_id,
             user_id=req.user_id,
             session_id=req.session_id,
         ):
-            yield token
+            yield f"data: {payload}\n\n"
 
     return StreamingResponse(event_generator(), media_type="text/event-stream")
 

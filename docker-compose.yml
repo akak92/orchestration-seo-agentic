@@ -109,6 +109,22 @@ services:
       - newsroom_net
     restart: unless-stopped
 
+  frontend:
+    build:
+      context: ./Service/frontend
+      dockerfile: Dockerfile
+      args:
+        VITE_API_URL: /api
+    container_name: newsroom_frontend
+    ports:
+      - "3000:80"
+    depends_on:
+      api:
+        condition: service_started
+    networks:
+      - newsroom_net
+    restart: unless-stopped
+
 # ── Volúmenes persistentes ─────────────────────────────────────────────────────
 volumes:
   postgres_data:

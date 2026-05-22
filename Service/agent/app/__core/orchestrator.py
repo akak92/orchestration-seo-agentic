@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from typing import AsyncIterator
 
 from langchain_core.messages import AIMessage, HumanMessage
@@ -87,7 +88,7 @@ class MultiAgentOrchestrator:
         Returns:
             dict con 'response' (str) y 'agent_used' (str | None).
         """
-        config = {"configurable": {"thread_id": thread_id}}
+        config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 20}
         initial_state = self._initial_state(message, user_id, session_id)
 
         final_state = await self._graph.ainvoke(initial_state, config=config)
@@ -108,21 +109,39 @@ class MultiAgentOrchestrator:
         session_id: str = "",
     ) -> AsyncIterator[str]:
         """
-        Async generator que emite los tokens de respuesta en tiempo real.
-        Filtra solo eventos on_chat_model_stream de agentes (no del Supervisor).
+        Async generator que emite eventos JSON en tiempo real:
+          {"type": "routing", "agent": "<name>"}   — cuando el supervisor deriva
+          {"type": "token",   "content": "<text>"} — cada token del agente
+          {"type": "done",    "agent_used": "<name>"} — al finalizar
         """
-        config = {"configurable": {"thread_id": thread_id}}
+        config = {"configurable": {"thread_id": thread_id}, "recursion_limit": 20}
         initial_state = self._initial_state(message, user_id, session_id)
 
+        agent_names = list(self._agents.keys())
+        routing_emitted = False
+        agent_used = "__end__"
+
         async for event in self._graph.astream_events(initial_state, config=config, version="v2"):
-            if event["event"] == "on_chat_model_stream":
-                # Ignorar tokens del nodo supervisor (son tool_calls de routing)
-                node = event.get("metadata", {}).get("langgraph_node", "")
-                if node == "supervisor":
-                    continue
+            node = event.get("metadata", {}).get("langgraph_node", "")
+
+            # Emit routing event the first time a specialist agent node starts
+            if (
+                event["event"] == "on_chain_start"
+                and node in agent_names
+                and not routing_emitted
+            ):
+                routing_emitted = True
+                agent_used = node
+                yield json.dumps({"type": "routing", "agent": node})
+                continue
+
+            # Stream tokens from agent nodes (skip supervisor tool-call tokens)
+            if event["event"] == "on_chat_model_stream" and node != "supervisor":
                 chunk = event["data"]["chunk"]
                 if chunk.content:
-                    yield chunk.content
+                    yield json.dumps({"type": "token", "content": chunk.content})
+
+        yield json.dumps({"type": "done", "agent_used": agent_used})
 
     def get_graph_diagram(self, xray: bool = False) -> str:
         return self._graph.get_graph(xray=xray).draw_mermaid()

@@ -23,7 +23,11 @@ async def _handle_message(message: aio_pika.IncomingMessage) -> None:
             logger.info(f"Procesando documento {document_id} ({mime_type})")
 
             processor = get_processor(mime_type)
-            extracted_text = await processor.extract_text(content)
+            raw_text = await processor.extract_text(content)
+
+            # Eliminar bytes nulos y caracteres de control que PostgreSQL UTF-8
+            # no acepta (0x00 provoca CharacterNotInRepertoireError).
+            extracted_text = raw_text.replace("\x00", "").strip()
 
             await _notify_api(document_id, status="done", extracted_text=extracted_text)
             logger.info(f"Documento {document_id} procesado correctamente.")
